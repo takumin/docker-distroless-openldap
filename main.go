@@ -159,21 +159,30 @@ func initialize(c *Config) {
 func slapd(command string) {
 	args := []string{}
 
-	if command != "" {
-		args = append(args, "-T")
-		args = append(args, command)
-	}
-
-	args = append(args, "-d")
-	args = append(args, "1")
-	args = append(args, "-f")
-	args = append(args, "/etc/openldap/slapd.conf")
-	args = append(args, "-F")
-	args = append(args, "/etc/openldap/slapd.d")
-
-	if command == "add" {
-		args = append(args, "-l")
-		args = append(args, "/etc/openldap/slapd.ldif")
+	switch command {
+	case "add":
+		args = append(args, []string{
+			"-T", command,
+			"-d", "1",
+			"-f", "/etc/openldap/slapd.conf",
+			"-F", "/etc/openldap/slapd.d",
+			"-l", "/etc/openldap/slapd.ldif",
+		}...)
+	case "index", "test":
+		args = append(args, []string{
+			"-T", command,
+			"-d", "1",
+			"-f", "/etc/openldap/slapd.conf",
+			"-F", "/etc/openldap/slapd.d",
+		}...)
+	case "":
+		args = append(args, []string{
+			"-d", "1",
+			"-F", "/etc/openldap/slapd.d",
+			"-h", "ldap:/// ldapi:///",
+		}...)
+	default:
+		panic("unknown slapd command.")
 	}
 
 	cmd := exec.Command("/usr/libexec/slapd", args...)
